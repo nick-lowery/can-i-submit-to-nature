@@ -133,7 +133,7 @@ ggplot(word.freq, aes(x = freq, y = nature, color = abs(nature - freq))) +
   labs(y = "nature", x = NULL)
 ```
 
-![](crawling_nature_files/figure-markdown_github/frequency-1.png)
+![](can-i-submit-to-nature/figure-markdown_github/frequency-1.png)
 
 Nothing hugely relevatory here. Common to all the journals is a bias towards cells (not surprising when the NIH budget is several times that of the NSF), and Nature papers constantly refer to multitudes of extended data due to length limitations. It's perhaps a poetic coincidence that NatComms papers feel the need to point out how creative they are, and that SciRep papers rely on alcohol more. Perhaps NatComms papers can make the jump to Nature if rely more on disk based assays, or moved their study system to the ocean / space? They also need to quit using so much lithium and aluminum.
 
@@ -159,7 +159,7 @@ nature.tfidf %>%
   coord_flip()
 ```
 
-![](crawling_nature_files/figure-markdown_github/tfidf-1.png)
+![](can-i-submit-to-nature/figure-markdown_github/tfidf-1.png)
 
 At first glance, this looks like nonsense, beccause most of these terms are gene names. For instance, yap and taz are both regulators involved in a lot of cancer studies; if your paper uses yap and taz in chimaeric constructs (gene editing stuff) to study the effects of vismodegib (a cancer drug), you've basically got a banker in Nature. However, you can't use "tumor" too much, otherwise you might get bounced to NatComms. For bacteria folks, cell cycle studies (ftsz) will get you NatComms but not higher; no idea who is using Campari for science but apparently there's a market for it. SciRep seems to get all the fun study systems, with dogs, venom, bats and twins enjoying fairly high representation, and I'm quite curious why it's also the home for sewer-related studies (I suppose they're not suited for glamour journals?). Zooming out, using as few real words as possible also seems to be a good signal for Nature, so remember to pack your manuscript with as many indecipherable acronyms as possible, just to be safe.
 
