@@ -1,10 +1,9 @@
 ---
 title: "Can I publish this in Nature? An NLP approach"
-date: 2018-11-01
-output: html_notebook
+subtitle: "Article scraping and exploratory analysis"
+date: 2018-11-06
+output: rmarkdown::github_document
 ---
-
-In attempts to teach myself something about natural language processesing, scientific articles seemed like a good corpus that I'm familiar with and would be reasonably amenable to various NLP pipelines.  So, given my disillusionment with the notion of "impact" in scientific publishing, a guide to whether one's manuscript was suitable for publication in Nature or some lesser rickety backwater publication (like Nature Communications) seemed to strike an appropriate balance of tractability and snark.
 
 # Scraping article text
 
@@ -120,12 +119,14 @@ ggplot(word.freq, aes(x = freq, y = nature, color = abs(nature - freq))) +
   labs(y = "nature", x = NULL)
 ```
 
-Nothing hugely relevatory here.  Common to all the journals is a bias towards cells (not surprising when the NIH budget is several times that of the NSF), and Nature papers constantly refer to multitudes of extended data due to length limitations.  It's perhaps a poetic coincidence that NatComms papers feel the need to point out how creative they are, and that SciRep papers rely on alcohol more.  Perhaps NatComms papers can make the jump to Nature if rely more on disk based assays, or moved their study system to the ocean / space?  They also need to quit using so much lithium and aluminum.
+Nothing hugely relevatory here.  Common to all the journals is a bias towards cells (not surprising when the NIH budget is several times that of the NSF), and Nature papers constantly refer to multitudes of extended data due to length limitations.  It's perhaps a poetic coincidence that NatComms papers feel the need to point out how creative they are, and that SciRep papers rely on alcohol more.  Perhaps NatComms papers can make the jump to Nature if they rely more on disk based assays, or moved their study system to the ocean and/or space?  They also need to quit using so much lithium and aluminum.
 
 
 ```{r stem frequencies, include = FALSE}
 
 # Since there appear to be some duplication in word forms (article, article's) as well as gene name alphabet soup, what do these plots look like if we stem the words first?
+
+# Answer: not very interesting
 
 stem.freq <- nature.final %>%
   unnest_tokens(word, article) %>%
@@ -153,7 +154,7 @@ ggplot(stem.freq, aes(x = freq, y = nature, color = abs(nature - freq))) +
 ```
 
 
-We can formalize this analysis a bit more by calculating the tf-idf.
+We can formalize this analysis a bit more by calculating the tf-idf.  This will specify which words are used more frequently within a group of articles from one journal (the term frequency, tf) relative to the frequency of that term across all articles in all journals (the inverse document frequency, idf).
 
 ```{r tfidf}
 nature.tfidf <- nature.final %>%
@@ -175,10 +176,66 @@ nature.tfidf %>%
   coord_flip()
 ```
 
-At first glance, this looks like nonsense, beccause most of these terms are gene names.  For instance, yap and taz are both regulators involved in a lot of cancer studies; if your paper uses yap and taz in chimaeric constructs (gene editing stuff) to study the effects of vismodegib (a cancer drug), you've basically got a banker in Nature.  However, you can't use "tumor" too much, otherwise you might get bounced to NatComms.  For bacteria folks, cell cycle studies (ftsz) will get you NatComms but not higher; no idea who is using Campari for science but apparently there's a market for it.  SciRep seems to get all the fun study systems, with dogs, venom, bats and twins enjoying fairly high representation, and I'm quite curious why it's also the home for sewer-related studies (I suppose they're not suited for glamour journals?).  Zooming out, using as few real words as possible also seems to be a good signal for Nature, so remember to pack your manuscript with as many indecipherable acronyms as possible, just to be safe.
+At first glance, this looks like nonsense, beccause most of these terms are gene names.  For instance, yap and taz are both regulators involved in a lot of cancer studies; if your paper uses yap and taz in chimaeric constructs (gene editing stuff) to study the effects of vismodegib (a cancer drug), you've basically got a banker in Nature.  However, you can't use "tumor" too much, otherwise you might get bounced to NatComms.  For bacteria folks, cell cycle studies (ftsz) will get you NatComms but not higher; no idea who is using Campari for science but apparently there's a market for it.  SciRep seems to get all the fun study systems, with dogs, venom, bats and twins enjoying relatively high representation, and I'm quite curious why it's also the home for sewer-related studies (I suppose they're not suited for glamour journals?).  Zooming out, using as few real words as possible also seems to be a good signal for Nature, so remember to pack your manuscript with as many indecipherable acronyms as possible, just to be safe.
 
+Just analyzing single words seems to indicate some potential biases in study systems among the journals.  To go deeper, let's look at the same analysis, but using n-grams of various size and see if there are certain phrases that are signals of scientific impact.
 
-## On the docket
-* further tf-idf analysis with n-grams
-* building a classifier, for when it's time to submit
+```{r bigrams}
+# "extended data" is hugely overrepresented in Nature, so we'll remove it to get a better sense of spread.
+# we'll also remove single letters, as these seem to involve remnants of parsed equations within the text.
+my.stopwords <- data_frame(word = c(letters, "extended", "data"))
+
+nature.bigram <- nature.final %>%
+  unnest_tokens(bigram, article, token = "ngrams", n = 2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
+  filter(!word1 %in% c(stop_words$word, my.stopwords$word)) %>%
+  filter(!word2 %in% c(stop_words$word, my.stopwords$word)) %>%
+  unite(bigram, word1, word2, sep = " ") %>%
+  count(journal, bigram) %>%
+  bind_tf_idf(bigram, journal, n)
+
+nature.bigram %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(bigram = factor(bigram, levels = rev(unique(bigram)))) %>%
+  group_by(journal) %>%
+  top_n(20, tf_idf) %>%
+  ungroup() %>%
+  ggplot(aes(bigram, tf_idf, fill = journal)) +
+  geom_col(show.legend = F) +
+  scale_y_continuous(labels = scientific_format(digits = 1)) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~journal, nrow = 1, scales = "free_y") +
+  coord_flip()
+```
+
+Still quite a bit of gene soup due to the way the text is parsed, but still some interesting bits to be had.  It is of utmost importance that having "biologically independent" replicates is noted explicitly in your Nature manuscript, and again we see yap and taz being the current hotness.  I'm quite curious what "reverse weathering" refers to, but that will have to wait for another day.  The highlight of the bigram analysis is the prevalence of "barrage firing" in NatComms, which I refuse to believe refers to anything other than naval warfare.  NatComms is also apparently the home of science performed via smelling.  SciRep retains it's status as the fun journal, where minds go to wander, drink cold brew and have pretentious debates about peripheral sensory systems and meta awareness.
+
+```{r trigrams, include = FALSE}
+# not that interesting
+
+nature.trigram <- nature.final %>%
+  unnest_tokens(trigram, article, token = "ngrams", n = 3) %>%
+  separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%
+  # omit usual stopwords from the list, as that will likely disrupt potentially interesting phrases
+  filter(!word1 %in% c(my.stopwords$word)) %>%
+  filter(!word2 %in% c(my.stopwords$word)) %>%
+  filter(!word3 %in% c(my.stopwords$word)) %>%
+  unite(trigram, word1, word2, word3, sep = " ") %>%
+  count(journal, trigram) %>%
+  bind_tf_idf(trigram, journal, n)
+
+nature.trigram %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(trigram = factor(trigram, levels = rev(unique(trigram)))) %>%
+  group_by(journal) %>%
+  top_n(20, tf_idf) %>%
+  ungroup() %>%
+  ggplot(aes(trigram, tf_idf, fill = journal)) +
+  geom_col(show.legend = F) +
+  scale_y_continuous(labels = scientific_format(digits = 1)) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~journal, nrow = 1, scales = "free_y") +
+  coord_flip()
+```
+
 
