@@ -1,0 +1,1 @@
+Don't rename file structure part way through a project.
