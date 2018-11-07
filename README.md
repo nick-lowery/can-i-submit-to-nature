@@ -7,9 +7,11 @@ In attempts to teach myself something about natural language processesing, scien
 (Also, a disclaimer: in the interest of silliness, while the following analyses are (more or less) legitimate, my discussion of the results will range from sarcastic to willful misinterpretation; for instance, the tf-idf results probably represent one or just a few articles that use a given term a *ton*, but it's more fun to treat them as general principles.  However, if you do incorporate this advice and get accepted in Nature don't forget to give a mention in the acknowledgements.)
 
 ## What's done
-* crawling and scraping the Nature website for article text ([crawling_nature.Rmd](/crawling_nature.Rmd))
-* exploratory word frequency / tf-idf analysis (also [crawling_nature.Rmd](/crawling_nature.Rmd))
+* crawling and scraping the Nature website for article text ([crawling_nature.md](/crawling_nature.md))
+* exploratory word frequency / tf-idf analysis (also [crawling_nature.md](/crawling_nature.md))
+* sentiment analysis ([nature_sentiment.md](/nature_sentiment.md))
 
 ## On the docket
+* document clustering
 * building a classifier, for when it's time to submit
 * attempt to train an RNN to write articles for me
