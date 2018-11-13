@@ -10,8 +10,8 @@ In attempts to teach myself something about natural language processesing, scien
 * crawling and scraping the Nature website for article text ([crawling_nature.md](/crawling_nature.md))
 * exploratory word frequency / tf-idf analysis (also [crawling_nature.md](/crawling_nature.md))
 * sentiment analysis ([nature_sentiment.md](/nature_sentiment.md))
+* topic modelling ([topic_modelling.md](/topic_modelling.md))
 
 ## On the docket
-* document clustering
 * building a classifier, for when it's time to submit
 * attempt to train an RNN to write articles for me
